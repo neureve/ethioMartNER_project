@@ -1,0 +1,878 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Liya-F/amharic-ecommerce-data-extractor-w4/blob/googleColab/notebooks/task6.ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 43,
+      "metadata": {
+        "collapsed": true,
+        "id": "fBJnYQS6LDP1",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "6bcfaa30-9576-4939-ec78-9595d4cad35a"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: transformers in /usr/local/lib/python3.11/dist-packages (4.52.4)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.11/dist-packages (from transformers) (3.18.0)\n",
+            "Requirement already satisfied: huggingface-hub<1.0,>=0.30.0 in /usr/local/lib/python3.11/dist-packages (from transformers) (0.33.0)\n",
+            "Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.11/dist-packages (from transformers) (2.0.2)\n",
+            "Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.11/dist-packages (from transformers) (24.2)\n",
+            "Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.11/dist-packages (from transformers) (6.0.2)\n",
+            "Requirement already satisfied: regex!=2019.12.17 in /usr/local/lib/python3.11/dist-packages (from transformers) (2024.11.6)\n",
+            "Requirement already satisfied: requests in /usr/local/lib/python3.11/dist-packages (from transformers) (2.32.3)\n",
+            "Requirement already satisfied: tokenizers<0.22,>=0.21 in /usr/local/lib/python3.11/dist-packages (from transformers) (0.21.1)\n",
+            "Requirement already satisfied: safetensors>=0.4.3 in /usr/local/lib/python3.11/dist-packages (from transformers) (0.5.3)\n",
+            "Requirement already satisfied: tqdm>=4.27 in /usr/local/lib/python3.11/dist-packages (from transformers) (4.67.1)\n",
+            "Requirement already satisfied: fsspec>=2023.5.0 in /usr/local/lib/python3.11/dist-packages (from huggingface-hub<1.0,>=0.30.0->transformers) (2025.3.2)\n",
+            "Requirement already satisfied: typing-extensions>=3.7.4.3 in /usr/local/lib/python3.11/dist-packages (from huggingface-hub<1.0,>=0.30.0->transformers) (4.14.0)\n",
+            "Requirement already satisfied: hf-xet<2.0.0,>=1.1.2 in /usr/local/lib/python3.11/dist-packages (from huggingface-hub<1.0,>=0.30.0->transformers) (1.1.4)\n",
+            "Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.11/dist-packages (from requests->transformers) (3.4.2)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.11/dist-packages (from requests->transformers) (3.10)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.11/dist-packages (from requests->transformers) (2.4.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.11/dist-packages (from requests->transformers) (2025.6.15)\n"
+          ]
+        }
+      ],
+      "source": [
+        "!pip install --upgrade transformers"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 44,
+      "metadata": {
+        "collapsed": true,
+        "id": "ecjhX6uh6qM-",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "2f8d9d76-986a-4179-892c-3c9755550f0c"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: datasets in /usr/local/lib/python3.11/dist-packages (2.14.4)\n",
+            "Requirement already satisfied: seqeval in /usr/local/lib/python3.11/dist-packages (1.2.2)\n",
+            "Requirement already satisfied: accelerate in /usr/local/lib/python3.11/dist-packages (1.7.0)\n",
+            "Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.11/dist-packages (from datasets) (2.0.2)\n",
+            "Requirement already satisfied: pyarrow>=8.0.0 in /usr/local/lib/python3.11/dist-packages (from datasets) (18.1.0)\n",
+            "Requirement already satisfied: dill<0.3.8,>=0.3.0 in /usr/local/lib/python3.11/dist-packages (from datasets) (0.3.7)\n",
+            "Requirement already satisfied: pandas in /usr/local/lib/python3.11/dist-packages (from datasets) (2.2.2)\n",
+            "Requirement already satisfied: requests>=2.19.0 in /usr/local/lib/python3.11/dist-packages (from datasets) (2.32.3)\n",
+            "Requirement already satisfied: tqdm>=4.62.1 in /usr/local/lib/python3.11/dist-packages (from datasets) (4.67.1)\n",
+            "Requirement already satisfied: xxhash in /usr/local/lib/python3.11/dist-packages (from datasets) (3.5.0)\n",
+            "Requirement already satisfied: multiprocess in /usr/local/lib/python3.11/dist-packages (from datasets) (0.70.15)\n",
+            "Requirement already satisfied: fsspec>=2021.11.1 in /usr/local/lib/python3.11/dist-packages (from fsspec[http]>=2021.11.1->datasets) (2025.3.2)\n",
+            "Requirement already satisfied: aiohttp in /usr/local/lib/python3.11/dist-packages (from datasets) (3.11.15)\n",
+            "Requirement already satisfied: huggingface-hub<1.0.0,>=0.14.0 in /usr/local/lib/python3.11/dist-packages (from datasets) (0.33.0)\n",
+            "Requirement already satisfied: packaging in /usr/local/lib/python3.11/dist-packages (from datasets) (24.2)\n",
+            "Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.11/dist-packages (from datasets) (6.0.2)\n",
+            "Requirement already satisfied: scikit-learn>=0.21.3 in /usr/local/lib/python3.11/dist-packages (from seqeval) (1.6.1)\n",
+            "Requirement already satisfied: psutil in /usr/local/lib/python3.11/dist-packages (from accelerate) (5.9.5)\n",
+            "Requirement already satisfied: torch>=2.0.0 in /usr/local/lib/python3.11/dist-packages (from accelerate) (2.6.0+cu124)\n",
+            "Requirement already satisfied: safetensors>=0.4.3 in /usr/local/lib/python3.11/dist-packages (from accelerate) (0.5.3)\n",
+            "Requirement already satisfied: aiohappyeyeballs>=2.3.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp->datasets) (2.6.1)\n",
+            "Requirement already satisfied: aiosignal>=1.1.2 in /usr/local/lib/python3.11/dist-packages (from aiohttp->datasets) (1.3.2)\n",
+            "Requirement already satisfied: attrs>=17.3.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp->datasets) (25.3.0)\n",
+            "Requirement already satisfied: frozenlist>=1.1.1 in /usr/local/lib/python3.11/dist-packages (from aiohttp->datasets) (1.7.0)\n",
+            "Requirement already satisfied: multidict<7.0,>=4.5 in /usr/local/lib/python3.11/dist-packages (from aiohttp->datasets) (6.4.4)\n",
+            "Requirement already satisfied: propcache>=0.2.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp->datasets) (0.3.2)\n",
+            "Requirement already satisfied: yarl<2.0,>=1.17.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp->datasets) (1.20.1)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.11/dist-packages (from huggingface-hub<1.0.0,>=0.14.0->datasets) (3.18.0)\n",
+            "Requirement already satisfied: typing-extensions>=3.7.4.3 in /usr/local/lib/python3.11/dist-packages (from huggingface-hub<1.0.0,>=0.14.0->datasets) (4.14.0)\n",
+            "Requirement already satisfied: hf-xet<2.0.0,>=1.1.2 in /usr/local/lib/python3.11/dist-packages (from huggingface-hub<1.0.0,>=0.14.0->datasets) (1.1.4)\n",
+            "Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.11/dist-packages (from requests>=2.19.0->datasets) (3.4.2)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.11/dist-packages (from requests>=2.19.0->datasets) (3.10)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.11/dist-packages (from requests>=2.19.0->datasets) (2.4.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.11/dist-packages (from requests>=2.19.0->datasets) (2025.6.15)\n",
+            "Requirement already satisfied: scipy>=1.6.0 in /usr/local/lib/python3.11/dist-packages (from scikit-learn>=0.21.3->seqeval) (1.15.3)\n",
+            "Requirement already satisfied: joblib>=1.2.0 in /usr/local/lib/python3.11/dist-packages (from scikit-learn>=0.21.3->seqeval) (1.5.1)\n",
+            "Requirement already satisfied: threadpoolctl>=3.1.0 in /usr/local/lib/python3.11/dist-packages (from scikit-learn>=0.21.3->seqeval) (3.6.0)\n",
+            "Requirement already satisfied: networkx in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (3.5)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (3.1.6)\n",
+            "Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (12.4.127)\n",
+            "Requirement already satisfied: nvidia-cuda-runtime-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (12.4.127)\n",
+            "Requirement already satisfied: nvidia-cuda-cupti-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (12.4.127)\n",
+            "Requirement already satisfied: nvidia-cudnn-cu12==9.1.0.70 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (9.1.0.70)\n",
+            "Requirement already satisfied: nvidia-cublas-cu12==12.4.5.8 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (12.4.5.8)\n",
+            "Requirement already satisfied: nvidia-cufft-cu12==11.2.1.3 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (11.2.1.3)\n",
+            "Requirement already satisfied: nvidia-curand-cu12==10.3.5.147 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (10.3.5.147)\n",
+            "Requirement already satisfied: nvidia-cusolver-cu12==11.6.1.9 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (11.6.1.9)\n",
+            "Requirement already satisfied: nvidia-cusparse-cu12==12.3.1.170 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (12.3.1.170)\n",
+            "Requirement already satisfied: nvidia-cusparselt-cu12==0.6.2 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (0.6.2)\n",
+            "Requirement already satisfied: nvidia-nccl-cu12==2.21.5 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (2.21.5)\n",
+            "Requirement already satisfied: nvidia-nvtx-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (12.4.127)\n",
+            "Requirement already satisfied: nvidia-nvjitlink-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (12.4.127)\n",
+            "Requirement already satisfied: triton==3.2.0 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (3.2.0)\n",
+            "Requirement already satisfied: sympy==1.13.1 in /usr/local/lib/python3.11/dist-packages (from torch>=2.0.0->accelerate) (1.13.1)\n",
+            "Requirement already satisfied: mpmath<1.4,>=1.1.0 in /usr/local/lib/python3.11/dist-packages (from sympy==1.13.1->torch>=2.0.0->accelerate) (1.3.0)\n",
+            "Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.11/dist-packages (from pandas->datasets) (2.9.0.post0)\n",
+            "Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.11/dist-packages (from pandas->datasets) (2025.2)\n",
+            "Requirement already satisfied: tzdata>=2022.7 in /usr/local/lib/python3.11/dist-packages (from pandas->datasets) (2025.2)\n",
+            "Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.11/dist-packages (from python-dateutil>=2.8.2->pandas->datasets) (1.17.0)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.11/dist-packages (from jinja2->torch>=2.0.0->accelerate) (3.0.2)\n"
+          ]
+        }
+      ],
+      "source": [
+        "!pip install datasets seqeval accelerate"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 45,
+      "metadata": {
+        "collapsed": true,
+        "id": "D593B7GW8uE-",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "fad4878a-3604-4b5e-ad59-ebfb4b148047"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: huggingface_hub in /usr/local/lib/python3.11/dist-packages (0.33.0)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.11/dist-packages (from huggingface_hub) (3.18.0)\n",
+            "Requirement already satisfied: fsspec>=2023.5.0 in /usr/local/lib/python3.11/dist-packages (from huggingface_hub) (2025.3.2)\n",
+            "Requirement already satisfied: packaging>=20.9 in /usr/local/lib/python3.11/dist-packages (from huggingface_hub) (24.2)\n",
+            "Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.11/dist-packages (from huggingface_hub) (6.0.2)\n",
+            "Requirement already satisfied: requests in /usr/local/lib/python3.11/dist-packages (from huggingface_hub) (2.32.3)\n",
+            "Requirement already satisfied: tqdm>=4.42.1 in /usr/local/lib/python3.11/dist-packages (from huggingface_hub) (4.67.1)\n",
+            "Requirement already satisfied: typing-extensions>=3.7.4.3 in /usr/local/lib/python3.11/dist-packages (from huggingface_hub) (4.14.0)\n",
+            "Requirement already satisfied: hf-xet<2.0.0,>=1.1.2 in /usr/local/lib/python3.11/dist-packages (from huggingface_hub) (1.1.4)\n",
+            "Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.11/dist-packages (from requests->huggingface_hub) (3.4.2)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.11/dist-packages (from requests->huggingface_hub) (3.10)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.11/dist-packages (from requests->huggingface_hub) (2.4.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.11/dist-packages (from requests->huggingface_hub) (2025.6.15)\n"
+          ]
+        }
+      ],
+      "source": [
+        "!pip install -U huggingface_hub"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 46,
+      "metadata": {
+        "id": "cDwrJAM69A99"
+      },
+      "outputs": [],
+      "source": [
+        "from datasets import Dataset, DatasetDict\n",
+        "import pandas as pd\n",
+        "from transformers import AutoTokenizer"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 47,
+      "metadata": {
+        "id": "AXSCPJT39R9L",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 73
+        },
+        "outputId": "23d434ba-6fde-42f4-c702-91b5b8b601a5"
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.HTML object>"
+            ],
+            "text/html": [
+              "\n",
+              "     <input type=\"file\" id=\"files-51f30cb4-c3d8-453f-abb1-11fbd2fe122e\" name=\"files[]\" multiple disabled\n",
+              "        style=\"border:none\" />\n",
+              "     <output id=\"result-51f30cb4-c3d8-453f-abb1-11fbd2fe122e\">\n",
+              "      Upload widget is only available when the cell has been executed in the\n",
+              "      current browser session. Please rerun this cell to enable.\n",
+              "      </output>\n",
+              "      <script>// Copyright 2017 Google LLC\n",
+              "//\n",
+              "// Licensed under the Apache License, Version 2.0 (the \"License\");\n",
+              "// you may not use this file except in compliance with the License.\n",
+              "// You may obtain a copy of the License at\n",
+              "//\n",
+              "//      http://www.apache.org/licenses/LICENSE-2.0\n",
+              "//\n",
+              "// Unless required by applicable law or agreed to in writing, software\n",
+              "// distributed under the License is distributed on an \"AS IS\" BASIS,\n",
+              "// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n",
+              "// See the License for the specific language governing permissions and\n",
+              "// limitations under the License.\n",
+              "\n",
+              "/**\n",
+              " * @fileoverview Helpers for google.colab Python module.\n",
+              " */\n",
+              "(function(scope) {\n",
+              "function span(text, styleAttributes = {}) {\n",
+              "  const element = document.createElement('span');\n",
+              "  element.textContent = text;\n",
+              "  for (const key of Object.keys(styleAttributes)) {\n",
+              "    element.style[key] = styleAttributes[key];\n",
+              "  }\n",
+              "  return element;\n",
+              "}\n",
+              "\n",
+              "// Max number of bytes which will be uploaded at a time.\n",
+              "const MAX_PAYLOAD_SIZE = 100 * 1024;\n",
+              "\n",
+              "function _uploadFiles(inputId, outputId) {\n",
+              "  const steps = uploadFilesStep(inputId, outputId);\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  // Cache steps on the outputElement to make it available for the next call\n",
+              "  // to uploadFilesContinue from Python.\n",
+              "  outputElement.steps = steps;\n",
+              "\n",
+              "  return _uploadFilesContinue(outputId);\n",
+              "}\n",
+              "\n",
+              "// This is roughly an async generator (not supported in the browser yet),\n",
+              "// where there are multiple asynchronous steps and the Python side is going\n",
+              "// to poll for completion of each step.\n",
+              "// This uses a Promise to block the python side on completion of each step,\n",
+              "// then passes the result of the previous step as the input to the next step.\n",
+              "function _uploadFilesContinue(outputId) {\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  const steps = outputElement.steps;\n",
+              "\n",
+              "  const next = steps.next(outputElement.lastPromiseValue);\n",
+              "  return Promise.resolve(next.value.promise).then((value) => {\n",
+              "    // Cache the last promise value to make it available to the next\n",
+              "    // step of the generator.\n",
+              "    outputElement.lastPromiseValue = value;\n",
+              "    return next.value.response;\n",
+              "  });\n",
+              "}\n",
+              "\n",
+              "/**\n",
+              " * Generator function which is called between each async step of the upload\n",
+              " * process.\n",
+              " * @param {string} inputId Element ID of the input file picker element.\n",
+              " * @param {string} outputId Element ID of the output display.\n",
+              " * @return {!Iterable<!Object>} Iterable of next steps.\n",
+              " */\n",
+              "function* uploadFilesStep(inputId, outputId) {\n",
+              "  const inputElement = document.getElementById(inputId);\n",
+              "  inputElement.disabled = false;\n",
+              "\n",
+              "  const outputElement = document.getElementById(outputId);\n",
+              "  outputElement.innerHTML = '';\n",
+              "\n",
+              "  const pickedPromise = new Promise((resolve) => {\n",
+              "    inputElement.addEventListener('change', (e) => {\n",
+              "      resolve(e.target.files);\n",
+              "    });\n",
+              "  });\n",
+              "\n",
+              "  const cancel = document.createElement('button');\n",
+              "  inputElement.parentElement.appendChild(cancel);\n",
+              "  cancel.textContent = 'Cancel upload';\n",
+              "  const cancelPromise = new Promise((resolve) => {\n",
+              "    cancel.onclick = () => {\n",
+              "      resolve(null);\n",
+              "    };\n",
+              "  });\n",
+              "\n",
+              "  // Wait for the user to pick the files.\n",
+              "  const files = yield {\n",
+              "    promise: Promise.race([pickedPromise, cancelPromise]),\n",
+              "    response: {\n",
+              "      action: 'starting',\n",
+              "    }\n",
+              "  };\n",
+              "\n",
+              "  cancel.remove();\n",
+              "\n",
+              "  // Disable the input element since further picks are not allowed.\n",
+              "  inputElement.disabled = true;\n",
+              "\n",
+              "  if (!files) {\n",
+              "    return {\n",
+              "      response: {\n",
+              "        action: 'complete',\n",
+              "      }\n",
+              "    };\n",
+              "  }\n",
+              "\n",
+              "  for (const file of files) {\n",
+              "    const li = document.createElement('li');\n",
+              "    li.append(span(file.name, {fontWeight: 'bold'}));\n",
+              "    li.append(span(\n",
+              "        `(${file.type || 'n/a'}) - ${file.size} bytes, ` +\n",
+              "        `last modified: ${\n",
+              "            file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() :\n",
+              "                                    'n/a'} - `));\n",
+              "    const percent = span('0% done');\n",
+              "    li.appendChild(percent);\n",
+              "\n",
+              "    outputElement.appendChild(li);\n",
+              "\n",
+              "    const fileDataPromise = new Promise((resolve) => {\n",
+              "      const reader = new FileReader();\n",
+              "      reader.onload = (e) => {\n",
+              "        resolve(e.target.result);\n",
+              "      };\n",
+              "      reader.readAsArrayBuffer(file);\n",
+              "    });\n",
+              "    // Wait for the data to be ready.\n",
+              "    let fileData = yield {\n",
+              "      promise: fileDataPromise,\n",
+              "      response: {\n",
+              "        action: 'continue',\n",
+              "      }\n",
+              "    };\n",
+              "\n",
+              "    // Use a chunked sending to avoid message size limits. See b/62115660.\n",
+              "    let position = 0;\n",
+              "    do {\n",
+              "      const length = Math.min(fileData.byteLength - position, MAX_PAYLOAD_SIZE);\n",
+              "      const chunk = new Uint8Array(fileData, position, length);\n",
+              "      position += length;\n",
+              "\n",
+              "      const base64 = btoa(String.fromCharCode.apply(null, chunk));\n",
+              "      yield {\n",
+              "        response: {\n",
+              "          action: 'append',\n",
+              "          file: file.name,\n",
+              "          data: base64,\n",
+              "        },\n",
+              "      };\n",
+              "\n",
+              "      let percentDone = fileData.byteLength === 0 ?\n",
+              "          100 :\n",
+              "          Math.round((position / fileData.byteLength) * 100);\n",
+              "      percent.textContent = `${percentDone}% done`;\n",
+              "\n",
+              "    } while (position < fileData.byteLength);\n",
+              "  }\n",
+              "\n",
+              "  // All done.\n",
+              "  yield {\n",
+              "    response: {\n",
+              "      action: 'complete',\n",
+              "    }\n",
+              "  };\n",
+              "}\n",
+              "\n",
+              "scope.google = scope.google || {};\n",
+              "scope.google.colab = scope.google.colab || {};\n",
+              "scope.google.colab._files = {\n",
+              "  _uploadFiles,\n",
+              "  _uploadFilesContinue,\n",
+              "};\n",
+              "})(self);\n",
+              "</script> "
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Saving labeled_telegram_product_price_location.txt to labeled_telegram_product_price_location (3).txt\n"
+          ]
+        }
+      ],
+      "source": [
+        "from google.colab import files\n",
+        "uploaded = files.upload()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 48,
+      "metadata": {
+        "id": "K6cLx1S4D6V9",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "f30d54f9-9be1-4230-ad03-14d3a531ae60"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "✅ Loaded 152 labeled sentences\n",
+            "🔎 Example:\n",
+            "[('3pcs', 'B-PRODUCT'), ('silicon', 'I-PRODUCT'), ('brush', 'I-PRODUCT'), ('spatulas', 'I-PRODUCT'), ('እስከ', 'O'), ('260°c', 'O'), ('ሙቀት', 'O'), ('መቆቆም', 'O'), ('የሚችል', 'O'), ('ዋጋ-550ብር', 'I-PRICE')]\n"
+          ]
+        }
+      ],
+      "source": [
+        "def read_conll_file(filename):\n",
+        "    sentences = []\n",
+        "    sentence = []\n",
+        "\n",
+        "    with open(filename, encoding='utf-8') as f:\n",
+        "        for line in f:\n",
+        "            line = line.strip()\n",
+        "            if not line:\n",
+        "                if sentence:\n",
+        "                    sentences.append(sentence)\n",
+        "                    sentence = []\n",
+        "            else:\n",
+        "                parts = line.split()\n",
+        "                if len(parts) == 2:\n",
+        "                    word, label = parts\n",
+        "                    sentence.append((word, label))\n",
+        "                else:\n",
+        "                    # Skip malformed lines or log them\n",
+        "                    print(f\"Skipping malformed line: {line}\")\n",
+        "\n",
+        "        # Add the last sentence if the file doesn't end with a newline\n",
+        "        if sentence:\n",
+        "            sentences.append(sentence)\n",
+        "\n",
+        "    return sentences\n",
+        "\n",
+        "# Replace with your actual filename (adjust this if necessary)\n",
+        "filename = list(uploaded.keys())[0]\n",
+        "sentences = read_conll_file(filename)\n",
+        "\n",
+        "print(f\"✅ Loaded {len(sentences)} labeled sentences\")\n",
+        "print(\"🔎 Example:\")\n",
+        "print(sentences[0][:10])  # show first 10 tokens from the first sentence\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 49,
+      "metadata": {
+        "id": "S7cQxzCCHFzp"
+      },
+      "outputs": [],
+      "source": [
+        "model_name = \"xlm-roberta-base\"\n",
+        "tokenizer = AutoTokenizer.from_pretrained(model_name)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 50,
+      "metadata": {
+        "id": "pi_PooXjHL9c"
+      },
+      "outputs": [],
+      "source": [
+        "# Label list\n",
+        "label_list = [\"O\", \"B-PRODUCT\", \"I-PRODUCT\", \"B-LOC\", \"I-LOC\", \"B-PRICE\", \"I-PRICE\"]\n",
+        "label_to_id = {label: i for i, label in enumerate(label_list)}\n",
+        "id_to_label = {i: label for label, i in label_to_id.items()}"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 51,
+      "metadata": {
+        "id": "JKvj9QhRHaUa",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "e7a1f3f2-1ce0-4ab3-bceb-c8f30d07c991"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "✅ Tokenized and aligned 152 samples\n"
+          ]
+        }
+      ],
+      "source": [
+        "def tokenize_and_align(sentences):\n",
+        "    tokenized_inputs = []\n",
+        "    tokenized_labels = []\n",
+        "\n",
+        "    for sentence in sentences:\n",
+        "        words, labels = zip(*sentence)\n",
+        "\n",
+        "        tokenized = tokenizer(\n",
+        "            list(words),\n",
+        "            is_split_into_words=True,\n",
+        "            truncation=True,\n",
+        "            padding=False,\n",
+        "            return_offsets_mapping=True,\n",
+        "            return_tensors=\"pt\"\n",
+        "        )\n",
+        "\n",
+        "        word_ids = tokenized.word_ids(batch_index=0)  # map tokens to word indices\n",
+        "        aligned_labels = []\n",
+        "\n",
+        "        prev_word_idx = None\n",
+        "        for word_idx in word_ids:\n",
+        "            if word_idx is None:\n",
+        "                aligned_labels.append(-100)  # special token\n",
+        "            elif word_idx != prev_word_idx:\n",
+        "                aligned_labels.append(label_to_id[labels[word_idx]])\n",
+        "            else:\n",
+        "                # subword: assign I-XXX or -100\n",
+        "                orig_label = labels[word_idx]\n",
+        "                if orig_label.startswith(\"B-\"):\n",
+        "                    aligned_labels.append(label_to_id[orig_label.replace(\"B-\", \"I-\")])\n",
+        "                else:\n",
+        "                    aligned_labels.append(label_to_id[orig_label])\n",
+        "            prev_word_idx = word_idx\n",
+        "\n",
+        "        tokenized_inputs.append(tokenized)\n",
+        "        tokenized_labels.append(aligned_labels)\n",
+        "\n",
+        "    return tokenized_inputs, tokenized_labels\n",
+        "\n",
+        "tokenized_inputs, tokenized_labels = tokenize_and_align(sentences)\n",
+        "print(\"✅ Tokenized and aligned\", len(tokenized_inputs), \"samples\")\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 52,
+      "metadata": {
+        "id": "hS_cC1bZH-_x",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "58ed80e7-61a5-4bf5-95db-ecae9be27691"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "✅ Dataset ready: 136 train / 16 validation samples\n"
+          ]
+        }
+      ],
+      "source": [
+        "from torch.utils.data import random_split\n",
+        "import torch\n",
+        "from datasets import Dataset\n",
+        "\n",
+        "# Flatten tokenized_inputs to dictionary format\n",
+        "input_ids = [ti[\"input_ids\"].squeeze() for ti in tokenized_inputs]\n",
+        "attention_masks = [ti[\"attention_mask\"].squeeze() for ti in tokenized_inputs]\n",
+        "\n",
+        "# Pack into dictionaries\n",
+        "features = [\n",
+        "    {\n",
+        "        \"input_ids\": ids,\n",
+        "        \"attention_mask\": mask,\n",
+        "        \"labels\": torch.tensor(label, dtype=torch.long)\n",
+        "    }\n",
+        "    for ids, mask, label in zip(input_ids, attention_masks, tokenized_labels)\n",
+        "]\n",
+        "\n",
+        "# Split into train and validation\n",
+        "train_size = int(0.9 * len(features))\n",
+        "val_size = len(features) - train_size\n",
+        "\n",
+        "train_dataset_raw, val_dataset_raw = random_split(features, [train_size, val_size])\n",
+        "\n",
+        "# Convert to HuggingFace Dataset\n",
+        "train_dataset = Dataset.from_list([dict(sample) for sample in train_dataset_raw])\n",
+        "val_dataset = Dataset.from_list([dict(sample) for sample in val_dataset_raw])\n",
+        "\n",
+        "print(f\"✅ Dataset ready: {len(train_dataset)} train / {len(val_dataset)} validation samples\")\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 53,
+      "metadata": {
+        "id": "mSBOX2NVId_y",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 200
+        },
+        "outputId": "56f9d70d-22f1-4fc4-dcaf-2e81c13e2f87"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "Some weights of XLMRobertaForTokenClassification were not initialized from the model checkpoint at xlm-roberta-base and are newly initialized: ['classifier.bias', 'classifier.weight']\n",
+            "You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.\n",
+            "/tmp/ipython-input-53-2046843761.py:38: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `Trainer.__init__`. Use `processing_class` instead.\n",
+            "  trainer = Trainer(\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.HTML object>"
+            ],
+            "text/html": [
+              "\n",
+              "    <div>\n",
+              "      \n",
+              "      <progress value='9' max='9' style='width:300px; height:20px; vertical-align: middle;'></progress>\n",
+              "      [9/9 00:02, Epoch 1/1]\n",
+              "    </div>\n",
+              "    <table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              " <tr style=\"text-align: left;\">\n",
+              "      <th>Step</th>\n",
+              "      <th>Training Loss</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "  </tbody>\n",
+              "</table><p>"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "TrainOutput(global_step=9, training_loss=1.4934797286987305, metrics={'train_runtime': 2.3261, 'train_samples_per_second': 58.468, 'train_steps_per_second': 3.869, 'total_flos': 17156540705568.0, 'train_loss': 1.4934797286987305, 'epoch': 1.0})"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 53
+        }
+      ],
+      "source": [
+        "from transformers import (\n",
+        "    TrainingArguments, Trainer, DataCollatorForTokenClassification, AutoModelForTokenClassification\n",
+        ")\n",
+        "\n",
+        "# Map your existing variables to the expected names\n",
+        "label2id = label_to_id\n",
+        "id2label = id_to_label\n",
+        "\n",
+        "# Load the model with the correct number of labels\n",
+        "model = AutoModelForTokenClassification.from_pretrained(\n",
+        "    model_name,\n",
+        "    num_labels=len(label2id)\n",
+        ")\n",
+        "model.config.id2label = id2label\n",
+        "model.config.label2id = label2id\n",
+        "\n",
+        "# Data collator for padding batches\n",
+        "data_collator = DataCollatorForTokenClassification(tokenizer)\n",
+        "\n",
+        "# Define training arguments\n",
+        "training_args = TrainingArguments(\n",
+        "    output_dir=\"./ner-model-output\",\n",
+        "    save_strategy=\"no\",                    # Don't save every epoch\n",
+        "    learning_rate=2e-5,\n",
+        "    per_device_train_batch_size=16,        # Bigger batch = fewer steps\n",
+        "    per_device_eval_batch_size=16,\n",
+        "    num_train_epochs=1,                    # Just 1 epoch\n",
+        "    weight_decay=0.01,\n",
+        "    logging_dir=\"./logs\",\n",
+        "    logging_strategy=\"no\",                 # Skip logging\n",
+        "    load_best_model_at_end=False,          # Skip model selection\n",
+        "    save_total_limit=1,\n",
+        "    report_to=[],                          # No WandB, no overhead\n",
+        "    fp16=True                              # Faster mixed precision on GPU\n",
+        ")\n",
+        "\n",
+        "# Set up Trainer\n",
+        "trainer = Trainer(\n",
+        "    model=model,\n",
+        "    args=training_args,\n",
+        "    train_dataset=train_dataset,\n",
+        "    eval_dataset=val_dataset,\n",
+        "    tokenizer=tokenizer,\n",
+        "    data_collator=data_collator,\n",
+        ")\n",
+        "\n",
+        "# Start training\n",
+        "trainer.train()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Save model and tokenizer to directory\n",
+        "model.save_pretrained(\"./nerr-model\")\n",
+        "tokenizer.save_pretrained(\"./nerr-model\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Mk1P9FBNTTFF",
+        "outputId": "989ba51b-7ad3-4868-a859-2a334621eae9"
+      },
+      "execution_count": 54,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "('./nerr-model/tokenizer_config.json',\n",
+              " './nerr-model/special_tokens_map.json',\n",
+              " './nerr-model/sentencepiece.bpe.model',\n",
+              " './nerr-model/added_tokens.json',\n",
+              " './nerr-model/tokenizer.json')"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 54
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "trainer.evaluate()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 124
+        },
+        "id": "b32g-LSgXLkh",
+        "outputId": "6b2b7565-0ab1-44f1-8c3f-74e9b19f8c20"
+      },
+      "execution_count": 55,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.HTML object>"
+            ],
+            "text/html": [
+              "\n",
+              "    <div>\n",
+              "      \n",
+              "      <progress value='1' max='1' style='width:300px; height:20px; vertical-align: middle;'></progress>\n",
+              "      [1/1 : < :]\n",
+              "    </div>\n",
+              "    "
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "{'eval_loss': 1.125124454498291,\n",
+              " 'eval_runtime': 0.0762,\n",
+              " 'eval_samples_per_second': 210.021,\n",
+              " 'eval_steps_per_second': 13.126,\n",
+              " 'epoch': 1.0}"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 55
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "\n",
+        "# Load your posts data CSV (replace with your actual file path)\n",
+        "df = pd.read_csv(\"telegram_posts_with_ner.csv\", parse_dates=[\"timestamp\"])\n",
+        "\n",
+        "# Ensure price is numeric (if extracted as string, convert and handle errors)\n",
+        "df['price'] = pd.to_numeric(df['price'], errors='coerce')\n",
+        "\n",
+        "# Filter out posts with missing prices for average price calculation\n",
+        "df_price = df.dropna(subset=['price'])\n",
+        "\n",
+        "# Group by vendor\n",
+        "vendor_groups = df.groupby('vendor_id')\n",
+        "\n",
+        "scorecard = []\n",
+        "\n",
+        "for vendor, group in vendor_groups:\n",
+        "    # Calculate posting frequency: posts per week\n",
+        "    total_weeks = (group['timestamp'].max() - group['timestamp'].min()).days / 7\n",
+        "    total_weeks = total_weeks if total_weeks > 0 else 1  # avoid division by zero\n",
+        "    posts_per_week = len(group) / total_weeks\n",
+        "\n",
+        "    # Average views per post\n",
+        "    avg_views = group['views'].mean()\n",
+        "\n",
+        "    # Top performing post (highest views)\n",
+        "    top_post = group.loc[group['views'].idxmax()]\n",
+        "    top_product = top_post['product']\n",
+        "    top_price = top_post['price']\n",
+        "\n",
+        "    # Average price point\n",
+        "    vendor_prices = df_price[df_price['vendor_id'] == vendor]['price']\n",
+        "    avg_price = vendor_prices.mean() if not vendor_prices.empty else 0\n",
+        "\n",
+        "    # Simple Lending Score: weighted sum\n",
+        "    lending_score = (avg_views * 0.5) + (posts_per_week * 0.5)\n",
+        "\n",
+        "    scorecard.append({\n",
+        "        'vendor_id': vendor,\n",
+        "        'avg_views_per_post': round(avg_views, 2),\n",
+        "        'posts_per_week': round(posts_per_week, 2),\n",
+        "        'avg_price_ETB': round(avg_price, 2),\n",
+        "        'lending_score': round(lending_score, 2),\n",
+        "        'top_product': top_product,\n",
+        "        'top_product_price': top_price\n",
+        "    })\n",
+        "\n",
+        "# Create DataFrame and save\n",
+        "scorecard_df = pd.DataFrame(scorecard)\n",
+        "\n",
+        "# Save to CSV\n",
+        "scorecard_df.to_csv(\"vendor_scorecard.csv\", index=False)\n",
+        "\n",
+        "print(\"✅ Vendor scorecard saved to vendor_scorecard.csv\")\n",
+        "print(scorecard_df.head())"
+      ],
+      "metadata": {
+        "id": "y0qFb1dss2aZ"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "gpuType": "T4",
+      "authorship_tag": "ABX9TyMfw0n2KuhVDaUNicmlMIkX",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    },
+    "accelerator": "GPU"
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
